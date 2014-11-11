@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Obfuscation by amaloz</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Obfuscation</h1>
+        <p>Implementation of cryptographic obfuscation</p>
+
+        <p class="view"><a href="https://github.com/amaloz/obfuscation">View the Project on GitHub <small>amaloz/obfuscation</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/amaloz/obfuscation/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/amaloz/obfuscation/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/amaloz/obfuscation">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="implementation-of-cryptographic-obfuscation" class="anchor" href="#implementation-of-cryptographic-obfuscation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation of Cryptographic Obfuscation</h1>
+
+<p>This code presents several implementations of cryptographic obfuscation, as
+listed in the following table:</p>
+
+<table>
+<thead>
+<tr>
+<th>Scheme</th>
+<th>ePrint Reference</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ananth, Gupta, Ishai, Sahai</td>
+<td><a href="https://eprint.iacr.org/2014/222">2014/222</a></td>
+<td></td>
+</tr>
+<tr>
+<td>Sahai, Zhandry</td>
+<td><a href="https://eprint.iacr.org/2014/773">2014/773</a></td>
+<td></td>
+</tr>
+<tr>
+<td>Zimmerman</td>
+<td><a href="https://eprint.iacr.org/2014/776">2014/776</a></td>
+<td>alpha</td>
+</tr>
+</tbody>
+</table>
+
+<p>A discussion of the AGIS implementation appears in the work:</p>
+
+<p>"Implementing Cryptographic Program Obfuscation." Daniel Apon, Yan Huang,
+Jonathan Katz, Alex J. Malozemoff. Cryptology ePrint Archive 2014/779.
+<a href="https://eprint.iacr.org/2014/779">https://eprint.iacr.org/2014/779</a>.</p>
+
+<p>All schemes use the graded encoding scheme of Coron et al. (CRYPTO,
+2013. <a href="https://eprint.iacr.org/2013/183">https://eprint.iacr.org/2013/183</a>).  The implementation is in a mix of
+Python and C, using <a href="http://sagemath.org">Sage</a>, <a href="https://gmplib.org">GNU GMP</a>
+and <a href="http://openmp.org">OpenMP</a>.  <b>The code is under active development, and
+may not be stable!</b> I will try to keep the master branch in a working state
+(most of the time), though.</p>
+
+<p>Instructions for building and running the code are in code/README.md, and
+scripts for running experiments and processing the results are in the scripts/
+directory.  Full traces of all the experiments found in the above paper can be
+found in the scripts/results/ directory.</p>
+
+<p>For any questions/comments, please e-mail amaloz at cs dot umd dot edu.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/amaloz">amaloz</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
