@@ -16,7 +16,7 @@
     <div class="wrapper">
       <header>
         <h1>Obfuscation</h1>
-        <p>Implementation of cryptographic obfuscation</p>
+        <p>Implementation of cryptographic program obfuscation</p>
 
         <p class="view"><a href="https://github.com/amaloz/obfuscation">View the Project on GitHub <small>amaloz/obfuscation</small></a></p>
 
@@ -29,10 +29,10 @@
       </header>
       <section>
         <h1>
-<a id="implementation-of-cryptographic-obfuscation" class="anchor" href="#implementation-of-cryptographic-obfuscation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation of Cryptographic Obfuscation</h1>
+<a id="implementation-of-cryptographic-program-obfuscation" class="anchor" href="#implementation-of-cryptographic-program-obfuscation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation of Cryptographic Program Obfuscation</h1>
 
-<p>This code presents several implementations of cryptographic obfuscation, as
-listed in the following table:</p>
+<p>This code presents several implementations of cryptographic program obfuscation,
+as listed in the following table:</p>
 
 <table>
 <thead>
@@ -44,17 +44,17 @@ listed in the following table:</p>
 </thead>
 <tbody>
 <tr>
-<td>Ananth, Gupta, Ishai, Sahai</td>
+<td>Ananth, Gupta, Ishai, Sahai (AGIS)</td>
 <td><a href="https://eprint.iacr.org/2014/222">2014/222</a></td>
 <td></td>
 </tr>
 <tr>
-<td>Sahai, Zhandry</td>
+<td>Sahai, Zhandry (SZ)</td>
 <td><a href="https://eprint.iacr.org/2014/773">2014/773</a></td>
 <td></td>
 </tr>
 <tr>
-<td>Zimmerman</td>
+<td>Zimmerman (Z)</td>
 <td><a href="https://eprint.iacr.org/2014/776">2014/776</a></td>
 <td>alpha</td>
 </tr>
@@ -80,6 +80,36 @@ directory.  Full traces of all the experiments found in the above paper can be
 found in the scripts/results/ directory.</p>
 
 <p>For any questions/comments, please e-mail amaloz at cs dot umd dot edu.</p>
+
+<h2>
+<a id="challenges" class="anchor" href="#challenges" aria-hidden="true"><span class="octicon octicon-link"></span></a>Challenges</h2>
+
+<p>In order to aid in the cryptanalysis of cryptographic program obfuscation, we
+plan to release a series of obfuscated point functions (that is, functions that
+output 0 on all inputs except one), with the goal of the attacker being to learn
+the hidden point.  The following table lists the available/broken challenges.</p>
+
+<table>
+<thead>
+<tr>
+<th>Challenge</th>
+<th>Link</th>
+<th>Approach</th>
+<th>Date Broken</th>
+<th>Broken By</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>14-bit point function; 60-bit security parameter</td>
+<td>
+<a href="https://www.dropbox.com/s/85d03o0ny3b1c0c/point-14.circ.obf.60.zip">Link</a> (23.96)</td>
+<td>AGIS</td>
+<td>18 Oct 2014</td>
+<td>Daniel J. Bernstein, Andreas Huelsing, Tanja Lange, Ruben Niederhagen</td>
+</tr>
+</tbody>
+</table>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/amaloz">amaloz</a></p>
