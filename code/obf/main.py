@@ -47,6 +47,10 @@ def obf(args):
     if args.nslots is None:
         args.nslots = args.secparam
 
+    if args.mlm not in ('CLT', 'GGH'):
+        print('%s invalid multilinear map specified' % errorstr)
+        sys.exit(1)
+
     if args.sahai_zhandry:
         bpclass = SZBranchingProgram
         obfclass = SZObfuscator
@@ -70,7 +74,7 @@ def obf(args):
             directory = args.load_obf
         elif args.load_circuit:
             start = time.time()
-            obf = obfclass(verbose=args.verbose)
+            obf = obfclass(mlm=args.mlm, verbose=args.verbose)
             directory = args.save if args.save \
                         else '%s.obf.%d' % (args.load_circuit, args.secparam)
             obf.obfuscate(args.load_circuit, args.secparam, directory,
@@ -143,6 +147,9 @@ def main():
     parser_obf.add_argument('--load-circuit', metavar='FILE', type=str,
                             action='store',
                             help='load circuit from FILE and obfuscate')
+    parser_obf.add_argument('--mlm', metavar='MLM', type=str, default='CLT',
+                            action='store',
+                            help='use multilinear map MLM [either CLT or GGH] (default: %(default)s)')
     parser_obf.add_argument('--test-circuit', metavar='FILE', type=str,
                             action='store',
                             help='test circuit from FILE')

@@ -1,26 +1,32 @@
 #include "utils.h"
 #include "pyutils.h"
+
 #include "clt_mlm.h"
+#include "ggh_mlm.h"
+
+#include "clt_utils.h"
+
+#include "gghlite/gghlite.h"
 
 #include <omp.h>
 
+enum mlm_type { CLT, GGH };
+
+struct mlm_state {
+    enum mlm_type choice;
+    union {
+        struct clt_mlm_state clt;
+        struct ggh_mlm_state ggh;
+    } mlm;
+};
+
 struct state {
-    struct clt_mlm_state mlm;
+    struct mlm_state mlm;
     char *dir;
 };
 
-void
-state_destructor(PyObject *self)
-{
-    struct state *s;
-
-    s = (struct state *) PyCapsule_GetPointer(self, NULL);
-    if (s) {
-        clt_mlm_cleanup(&s->mlm);
-    }
-    free(s);
-}
-
+#define clt(s) (s)->mlm.mlm.clt
+#define ggh(s) (s)->mlm.mlm.ggh
 
 static int
 extract_indices(PyObject *py_list, int *idx1, int *idx2)
@@ -41,7 +47,7 @@ extract_indices(PyObject *py_list, int *idx1, int *idx2)
 }
 
 static int
-write_vector(const char *dir, mpz_t *vector, long size, char *name)
+write_vector(const char *dir, const mpz_t *vector, long size, const char *name)
 {
     char *fname;
     int fnamelen;
@@ -57,8 +63,8 @@ write_vector(const char *dir, mpz_t *vector, long size, char *name)
 }
 
 static int
-write_layer(const char *dir, int inp, long idx, mpz_t *zero, mpz_t *one,
-            long nrows, long ncols)
+write_layer(const char *dir, int inp, long idx, const mpz_t *zero,
+            const mpz_t *one, long nrows, long ncols)
 {
     mpz_t tmp;
     char *fname;
@@ -85,7 +91,6 @@ write_layer(const char *dir, int inp, long idx, mpz_t *zero, mpz_t *one,
     (void) save_mpz_scalar(fname, tmp);
     free(fname);
     mpz_clear(tmp);
-
     return 0;
 }
 
@@ -96,46 +101,80 @@ write_layer(const char *dir, int inp, long idx, mpz_t *zero, mpz_t *one,
 //
 
 PyObject *
-obf_setup(PyObject *self, PyObject *args)
+obf_setup_clt(PyObject *self, PyObject *args)
 {
     long kappa, size;
-    struct state *s = NULL;
-    long *pows = NULL;
+    struct state *s;
 
     s = (struct state *) malloc(sizeof(struct state));
     if (s == NULL)
         return NULL;
-    if (!PyArg_ParseTuple(args, "lllls", &s->mlm.secparam, &kappa, &size,
-                          &s->mlm.nzs, &s->dir)) {
+    s->mlm.choice = CLT;
+
+    if (!PyArg_ParseTuple(args, "lllls", &clt(s).secparam, &kappa, &size,
+                          &clt(s).nzs, &s->dir)) {
         free(s);
         return NULL;
     }
 
-    pows = (long *) malloc(sizeof(long) * s->mlm.nzs);
-    for (unsigned long i = 0; i < s->mlm.nzs; ++i) {
-        pows[i] = 1L;
-    }
+    {
+        long *pows;
 
-    (void) clt_mlm_setup(&s->mlm, s->dir, pows, kappa, size, g_verbose);
+        pows = (long *) malloc(sizeof(long) * clt(s).nzs);
+        for (unsigned long i = 0; i < clt(s).nzs; ++i) {
+            pows[i] = 1L;
+        }
+
+        (void) clt_mlm_setup(&clt(s), s->dir, pows, kappa, size, g_verbose);
+
+        free(pows);
+    }
 
     /* Convert g_i values to python objects */
     {
         PyObject *py_gs, *py_state;
 
-        py_gs = PyList_New(s->mlm.secparam);
+        py_gs = PyList_New(clt(s).secparam);
 
         //
         // Only convert the first secparam g_i values since we only need to fill in
         // the first secparam slots of the plaintext space.
         //
-        for (unsigned long i = 0; i < s->mlm.secparam; ++i) {
-            PyList_SetItem(py_gs, i, mpz_to_py(s->mlm.gs[i]));
+        for (unsigned long i = 0; i < clt(s).secparam; ++i) {
+            PyList_SetItem(py_gs, i, mpz_to_py(clt(s).gs[i]));
         }
 
         /* Encapsulate state as python object */
-        py_state = PyCapsule_New((void *) s, NULL, state_destructor);
+        py_state = PyCapsule_New((void *) s, NULL, NULL);
 
         return PyTuple_Pack(2, py_state, py_gs);
+    }
+}
+
+PyObject *
+obf_setup_ggh(PyObject *self, PyObject *args)
+{
+    long secparam, kappa, size;
+    struct state *s;
+
+    s = (struct state *) malloc(sizeof(struct state));
+    if (s == NULL)
+        return NULL;
+    s->mlm.choice = GGH;
+
+    if (!PyArg_ParseTuple(args, "llls", &secparam, &kappa, &size, &s->dir)) {
+        free(s);
+        return NULL;
+    }
+
+    ggh_mlm_setup(&ggh(s), secparam, kappa);
+
+    {
+        PyObject *py_state;
+
+        py_state = PyCapsule_New((void *) s, NULL, NULL);
+
+        return py_state;
     }
 }
 
@@ -174,19 +213,26 @@ obf_encode_vectors(PyObject *self, PyObject *args)
     for (ssize_t i = 0; i < length; ++i) {
         mpz_t *elems;
         mpz_init(vector[i]);
-        elems = (mpz_t *) malloc(sizeof(mpz_t) * s->mlm.secparam);
-        for (unsigned long j = 0; j < s->mlm.secparam; ++j) {
+        elems = (mpz_t *) malloc(sizeof(mpz_t) * clt(s).secparam);
+        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
             mpz_init(elems[j]);
             py_to_mpz(elems[j],
                       PyList_GET_ITEM(PyList_GET_ITEM(py_vectors, j), i));
         }
-        clt_mlm_encode(&s->mlm, vector[i], s->mlm.secparam, elems, 2, indices, pows);
-        for (unsigned long j = 0; j < s->mlm.secparam; ++j) {
+        switch (s->mlm.choice) {
+        case CLT:
+            clt_mlm_encode(&clt(s), vector[i], clt(s).secparam,
+                           (const mpz_t *) elems, 2, indices, pows);
+            break;
+        case GGH:
+            break;
+        }
+        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
             mpz_clear(elems[j]);
         }
         free(elems);
     }
-    (void) write_vector(s->dir, vector, length, name);
+    (void) write_vector(s->dir, (const mpz_t *) vector, length, name);
     for (ssize_t i = 0; i < length; ++i) {
         mpz_clear(vector[i]);
     }
@@ -253,19 +299,21 @@ obf_encode_layers(PyObject *self, PyObject *args)
         }
 
         mpz_init(*val);
-        elems = (mpz_t *) malloc(sizeof(mpz_t) * s->mlm.secparam);
-        for (unsigned long j = 0; j < s->mlm.secparam; ++j) {
+        elems = (mpz_t *) malloc(sizeof(mpz_t) * clt(s).secparam);
+        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
             mpz_init(elems[j]);
             py_to_mpz(elems[j],
                       PyList_GET_ITEM(PyList_GET_ITEM(py_array, j), i));
         }
-        clt_mlm_encode(&s->mlm, *val, s->mlm.secparam, elems, 2, indices, pows);
-        for (unsigned long j = 0; j < s->mlm.secparam; ++j) {
+        clt_mlm_encode(&clt(s), *val, clt(s).secparam, (const mpz_t *) elems, 2,
+                       indices, pows);
+        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
             mpz_clear(elems[j]);
         }
         free(elems);
     }
-    (void) write_layer(s->dir, inp, idx, zero, one, nrows, ncols);
+    (void) write_layer(s->dir, inp, idx, (const mpz_t *) zero,
+                       (const mpz_t *) one, nrows, ncols);
 
     for (int i = 0; i < nrows * ncols; ++i) {
         mpz_clears(zero[i], one[i], NULL);
@@ -365,7 +413,8 @@ obf_sz_evaluate(PyObject *self, PyObject *args)
             for (int i = 0; i < nrows_prev * ncols; ++i) {
                 mpz_init(result[i]);
             }
-            mult_mats(result, left, right, q, nrows_prev, nrows, ncols);
+            clt_mul_mats(result, (const mpz_t *) left, (const mpz_t *) right,
+                         q, nrows_prev, nrows, ncols);
             for (int i = 0; i < nrows_prev * nrows; ++i) {
                 mpz_clear(left[i]);
             }
@@ -491,7 +540,7 @@ obf_evaluate(PyObject *self, PyObject *args)
             (void) snprintf(fname, fnamelen, "%s/s_enc", dir);
             (void) load_mpz_vector(fname, s, size);
         }
-        mult_vect_by_mat(s, comp, q, size, t);
+        clt_mul_vect_by_mat(s, (const mpz_t *) comp, q, size, t);
         end = current_time();
         if (g_verbose)
             (void) fprintf(stderr, " Multiplying matrices: %f\n",
@@ -502,7 +551,7 @@ obf_evaluate(PyObject *self, PyObject *args)
         start = current_time();
         (void) snprintf(fname, fnamelen, "%s/t_enc", dir);
         (void) load_mpz_vector(fname, t, size);
-        mult_vect_by_vect(tmp, s, t, q, size);
+        clt_mul_vect_by_vect(tmp, (const mpz_t *) s, (const mpz_t *) t, q, size);
         end = current_time();
         if (g_verbose)
             (void) fprintf(stderr, " Multiplying vectors: %f\n",
@@ -559,7 +608,15 @@ obf_cleanup(PyObject *self, PyObject *args)
     if (s == NULL)
         return NULL;
 
-    clt_mlm_cleanup(&s->mlm);
+    switch (s->mlm.choice) {
+    case CLT:
+        clt_mlm_cleanup(&clt(s));
+        break;
+    case GGH:
+        ggh_mlm_cleanup(&ggh(s));
+        break;
+    }
+
     free(s);
 
     Py_RETURN_NONE;
@@ -569,8 +626,10 @@ static PyMethodDef
 ObfMethods[] = {
     {"verbose", obf_verbose, METH_VARARGS,
      "Set verbosity."},
-    {"setup", obf_setup, METH_VARARGS,
-     "Set up obfuscator."},
+    {"setup_clt", obf_setup_clt, METH_VARARGS,
+     "Set up obfuscator using CLT multilinear map."},
+    {"setup_ggh", obf_setup_ggh, METH_VARARGS,
+     "Set up obfuscator using GGH multilinear map."},
     {"encode_vectors", obf_encode_vectors, METH_VARARGS,
      "Encode a vector in each slot."},
     {"encode_layers", obf_encode_layers, METH_VARARGS,

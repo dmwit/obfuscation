@@ -1,5 +1,5 @@
-#ifndef __IND_OBFUSCATION__CIRCUIT_H__
-#define __IND_OBFUSCATION__CIRCUIT_H__
+#ifndef __CIRCUIT_H__
+#define __CIRCUIT_H__
 
 #include <gmp.h>
 

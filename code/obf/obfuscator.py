@@ -2,11 +2,13 @@ import utils
 import os, time
 
 class Obfuscator(object):
-    def __init__(self, obf, verbose=False):
+    def __init__(self, obf, mlm='CLT', verbose=False):
         self._state = None
         self._verbose = verbose
         obf.verbose(self._verbose)
         self.logger = utils.make_logger(self._verbose)
+        assert mlm in ('CLT', 'GGH')
+        self._mlm = mlm
 
     def _remove_old(self, directory):
         # remove old files in obfuscation directory

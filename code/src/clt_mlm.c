@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 static int
@@ -253,6 +254,22 @@ clt_mlm_encode(struct clt_mlm_state *s, mpz_t out, size_t nins,
         mpz_mod(out, out, s->q);
     }
     mpz_clears(r, tmp, NULL);
+}
+
+void
+clt_mlm_add(const struct clt_mlm_state *s, mpz_t out, const mpz_t a,
+            const mpz_t b)
+{
+    mpz_add(out, a, b);
+    mpz_mod(out, out, s->q);
+}
+
+void
+clt_mlm_mul(const struct clt_mlm_state *s, mpz_t out, const mpz_t a,
+            const mpz_t b)
+{
+    mpz_mul(out, a, b);
+    mpz_mod(out, out, s->q);
 }
 
 int

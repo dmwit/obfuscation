@@ -29,6 +29,14 @@ clt_mlm_encode(struct clt_mlm_state *s, mpz_t out, size_t nins,
 			   const mpz_t *ins, unsigned int nzs, const int *indices,
 			   const int *pows);
 
+void
+clt_mlm_add(const struct clt_mlm_state *s, mpz_t out, const mpz_t a,
+            const mpz_t b);
+
+void
+clt_mlm_mul(const struct clt_mlm_state *s, mpz_t out, const mpz_t a,
+            const mpz_t b);
+
 int
 clt_mlm_is_zero(const mpz_t c, const mpz_t pzt, const mpz_t q, long nu);
 

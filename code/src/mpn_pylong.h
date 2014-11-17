@@ -1,7 +1,7 @@
 #ifndef MPN_PYLONG_H
 #define MPN_PYLONG_H
 
-#include <Python.h>
+#include <python2.7/Python.h>
 #include <gmp.h>
 
 /************************************************************/

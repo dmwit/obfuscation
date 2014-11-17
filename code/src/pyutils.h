@@ -1,5 +1,5 @@
-#ifndef __IND_OBFUSCATION__PYUTILS_H__
-#define __IND_OBFUSCATION__PYUTILS_H__
+#ifndef __PYUTILS_H__
+#define __PYUTILS_H__
 
 #include <python2.7/Python.h>
 #include <gmp.h>
