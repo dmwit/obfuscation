@@ -77,7 +77,7 @@ save_mpz_scalar(const char *fname, const mpz_t x)
 }
 
 int
-load_mpz_vector(const char *fname, mpz_t *m, const int len)
+load_mpz_vector(const char *fname, mpz_t *m, int len)
 {
     FILE *f;
     if ((f = fopen(fname, "r")) == NULL) {
@@ -92,7 +92,7 @@ load_mpz_vector(const char *fname, mpz_t *m, const int len)
 }
 
 int
-save_mpz_vector(const char *fname, const mpz_t *m, const int len)
+save_mpz_vector(const char *fname, const mpz_t *v, int len)
 {
     FILE *f;
     if ((f = fopen(fname, "w")) == NULL) {
@@ -100,7 +100,7 @@ save_mpz_vector(const char *fname, const mpz_t *m, const int len)
         return 1;
     }
     for (int i = 0; i < len; ++i) {
-        if (mpz_out_raw(f, m[i]) == 0) {
+        if (mpz_out_raw(f, v[i]) == 0) {
             (void) fclose(f);
             return 1;
         }
@@ -109,8 +109,23 @@ save_mpz_vector(const char *fname, const mpz_t *m, const int len)
     return 0;
 }
 
+int
+save_fmpz_mod_poly_vector(const char *fname, const fmpz_mod_poly_t *v, int len)
+{
+    FILE *f;
+    if ((f = fopen(fname, "w")) == NULL) {
+        perror(fname);
+        return 1;
+    }
+    /* for (int i = 0; i < len; ++i) { */
+        fprintf(stderr, "NOT SAVING VECTOR YET\n");
+    /* } */
+    (void) fclose(f);
+    return 0;
+}
+
 void
-mpz_genrandom(mpz_t rnd, gmp_randstate_t *rng, const long nbits)
+mpz_genrandom(mpz_t rnd, gmp_randstate_t *rng, long nbits)
 {
     mpz_t one;
     mpz_init_set_ui(one, 1 << (nbits - 1));

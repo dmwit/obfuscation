@@ -47,7 +47,8 @@ extract_indices(PyObject *py_list, int *idx1, int *idx2)
 }
 
 static int
-write_vector(const char *dir, const mpz_t *vector, long size, const char *name)
+write_clt_vector(const char *dir, const mpz_t *vector, long size,
+                 const char *name)
 {
     char *fname;
     int fnamelen;
@@ -63,8 +64,25 @@ write_vector(const char *dir, const mpz_t *vector, long size, const char *name)
 }
 
 static int
-write_layer(const char *dir, int inp, long idx, const mpz_t *zero,
-            const mpz_t *one, long nrows, long ncols)
+write_ggh_vector(const char *dir, const gghlite_enc_t *vector, long size,
+                 const char *name)
+{
+    char *fname;
+    int fnamelen;
+
+    fnamelen = strlen(dir) + strlen(name) + 2;
+    fname = (char *) malloc(sizeof(char) * fnamelen);
+    if (fname == NULL)
+        return 1;
+    (void) snprintf(fname, fnamelen, "%s/%s", dir, name);
+    (void) save_fmpz_mod_poly_vector(fname, vector, size);
+    free(fname);
+    return 0;
+}
+
+static int
+write_clt_layer(const char *dir, int inp, long idx, const mpz_t *zero,
+                const mpz_t *one, long nrows, long ncols)
 {
     mpz_t tmp;
     char *fname;
@@ -100,7 +118,7 @@ write_layer(const char *dir, int inp, long idx, const mpz_t *zero,
 //
 //
 
-PyObject *
+static PyObject *
 obf_setup_clt(PyObject *self, PyObject *args)
 {
     long kappa, size;
@@ -151,10 +169,10 @@ obf_setup_clt(PyObject *self, PyObject *args)
     }
 }
 
-PyObject *
+static PyObject *
 obf_setup_ggh(PyObject *self, PyObject *args)
 {
-    long secparam, kappa, size;
+    long secparam, kappa, nzs, size;
     struct state *s;
 
     s = (struct state *) malloc(sizeof(struct state));
@@ -162,7 +180,8 @@ obf_setup_ggh(PyObject *self, PyObject *args)
         return NULL;
     s->mlm.choice = GGH;
 
-    if (!PyArg_ParseTuple(args, "llls", &secparam, &kappa, &size, &s->dir)) {
+    if (!PyArg_ParseTuple(args, "llls", &secparam, &kappa, &size, &nzs,
+                          &s->dir)) {
         free(s);
         return NULL;
     }
@@ -170,12 +189,76 @@ obf_setup_ggh(PyObject *self, PyObject *args)
     ggh_mlm_setup(&ggh(s), secparam, kappa);
 
     {
-        PyObject *py_state;
+        PyObject *py_state, *py_prime;
 
+        py_prime = NULL;
         py_state = PyCapsule_New((void *) s, NULL, NULL);
 
-        return py_state;
+        return PyTuple_Pack(1, py_state);
     }
+}
+
+static void
+encode_vectors_clt(struct state *s, const PyObject *py_vectors,
+                   const int indices[2], const int pows[2], const char *name)
+{
+    mpz_t *vector;
+    ssize_t length;
+
+    // We assume that all vectors have the same length, and thus just grab the
+    // length of the first vector
+    length = PyList_GET_SIZE(PyList_GET_ITEM(py_vectors, 0));
+    vector = (mpz_t *) malloc(sizeof(mpz_t) * length);
+
+#pragma omp parallel for
+    for (ssize_t i = 0; i < length; ++i) {
+        mpz_t *elems;
+        mpz_init(vector[i]);
+        elems = (mpz_t *) malloc(sizeof(mpz_t) * clt(s).secparam);
+        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
+            mpz_init(elems[j]);
+            py_to_mpz(elems[j],
+                      PyList_GET_ITEM(PyList_GET_ITEM(py_vectors, j), i));
+        }
+        clt_mlm_encode(&clt(s), vector[i], clt(s).secparam,
+                       (const mpz_t *) elems, 2, indices, pows);
+        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
+            mpz_clear(elems[j]);
+        }
+        free(elems);
+    }
+    (void) write_clt_vector(s->dir, (const mpz_t *) vector, length, name);
+    for (ssize_t i = 0; i < length; ++i) {
+        mpz_clear(vector[i]);
+    }
+    free(vector);
+}
+
+static void
+encode_vectors_ggh(struct state *s, const PyObject *py_vectors,
+                   const int indices[2], const int pows[2], const char *name)
+{
+    gghlite_enc_t *vector;
+    ssize_t length;
+
+    length = PyList_GET_SIZE(PyList_GET_ITEM(py_vectors, 0));
+    vector = (gghlite_enc_t *) malloc(sizeof(gghlite_enc_t) * length);
+
+#pragma omp parallel for
+    for (ssize_t i = 0; i < length; ++i) {
+        gghlite_enc_t elem;
+        gghlite_enc_init(elem, ggh(s).ggh->pk);
+        gghlite_enc_init(vector[i], ggh(s).ggh->pk);
+        py_to_fmpz_mod_poly(elem, PyList_GET_ITEM(py_vectors, i));
+        ggh_mlm_encode(&ggh(s), vector[i], elem);
+        gghlite_enc_clear(elem);
+    }
+    (void) write_ggh_vector(s->dir, (const gghlite_enc_t *) vector, length,
+                            name);
+    for (ssize_t i = 0; i < length; ++i) {
+        gghlite_enc_clear(vector[i]);
+    }
+    free(vector);
 }
 
 //
@@ -188,8 +271,6 @@ obf_encode_vectors(PyObject *self, PyObject *args)
     char *name;
     int indices[2];
     int pows[] = {1, 1};
-    mpz_t *vector;
-    ssize_t length;
     double start, end;
     struct state *s;
 
@@ -200,80 +281,36 @@ obf_encode_vectors(PyObject *self, PyObject *args)
     if (s == NULL)
         return NULL;
 
-    start = current_time();
-
-    // We assume that all vectors have the same length, and thus just grab the
-    // length of the first vector
-    length = PyList_GET_SIZE(PyList_GET_ITEM(py_vectors, 0));
-    vector = (mpz_t *) malloc(sizeof(mpz_t) * length);
-
     (void) extract_indices(py_list, &indices[0], &indices[1]);
 
-#pragma omp parallel for
-    for (ssize_t i = 0; i < length; ++i) {
-        mpz_t *elems;
-        mpz_init(vector[i]);
-        elems = (mpz_t *) malloc(sizeof(mpz_t) * clt(s).secparam);
-        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
-            mpz_init(elems[j]);
-            py_to_mpz(elems[j],
-                      PyList_GET_ITEM(PyList_GET_ITEM(py_vectors, j), i));
-        }
-        switch (s->mlm.choice) {
-        case CLT:
-            clt_mlm_encode(&clt(s), vector[i], clt(s).secparam,
-                           (const mpz_t *) elems, 2, indices, pows);
-            break;
-        case GGH:
-            break;
-        }
-        for (unsigned long j = 0; j < clt(s).secparam; ++j) {
-            mpz_clear(elems[j]);
-        }
-        free(elems);
+    start = current_time();
+    switch (s->mlm.choice) {
+    case CLT:
+        encode_vectors_clt(s, py_vectors, indices, pows, name);
+        break;
+    case GGH:
+        encode_vectors_ggh(s, py_vectors, indices, pows, name);
+        break;
+    default:
+        return NULL;
     }
-    (void) write_vector(s->dir, (const mpz_t *) vector, length, name);
-    for (ssize_t i = 0; i < length; ++i) {
-        mpz_clear(vector[i]);
-    }
-    free(vector);
 
     end = current_time();
     if (g_verbose)
         (void) fprintf(stderr, "  Encoding %ld elements: %f\n",
-                       length, end - start);
+                       PyList_GET_SIZE(PyList_GET_ITEM(py_vectors, 0)),
+                       end - start);
 
     Py_RETURN_NONE;
 }
 
-//
-// Encode N layers across all slots of the MLM
-//
-static PyObject *
-obf_encode_layers(PyObject *self, PyObject *args)
+static void
+encode_layers_clt(struct state *s, long inp, long idx, long nrows, long ncols,
+                  PyObject *py_zero_ms, PyObject *py_one_ms,
+                  int zero_indices[2], int one_indices[2],
+                  const int pows[2])
 {
-    PyObject *py_zero_ms, *py_one_ms;
-    PyObject *py_zero_set, *py_one_set;
-    PyObject *py_state;
-    int zero_indices[2], one_indices[2];
-    int pows[] = {1, 1};
-    long inp, idx, nrows, ncols;
     mpz_t *zero, *one;
-    double start, end;
-    struct state *s;
-
-    if (!PyArg_ParseTuple(args, "OllllOOOO", &py_state, &idx, &nrows, &ncols,
-                          &inp, &py_zero_ms, &py_one_ms, &py_zero_set, &py_one_set))
-        return NULL;
-
-    s = (struct state *) PyCapsule_GetPointer(py_state, NULL);
-    if (s == NULL)
-        return NULL;
-
-    start = current_time();
-
-    (void) extract_indices(py_zero_set, &zero_indices[0], &zero_indices[1]);
-    (void) extract_indices(py_one_set, &one_indices[0], &one_indices[1]);
 
     zero = (mpz_t *) malloc(sizeof(mpz_t) * nrows * ncols);
     one = (mpz_t *) malloc(sizeof(mpz_t) * nrows * ncols);
@@ -290,12 +327,12 @@ obf_encode_layers(PyObject *self, PyObject *args)
             i = ctr;
             val = &zero[i];
             py_array = py_zero_ms;
-            indices = (int *) &zero_indices;
+            indices = zero_indices;
         } else {
             i = ctr - nrows * ncols;
             val = &one[i];
             py_array = py_one_ms;
-            indices = (int *) &one_indices;
+            indices = one_indices;
         }
 
         mpz_init(*val);
@@ -312,14 +349,57 @@ obf_encode_layers(PyObject *self, PyObject *args)
         }
         free(elems);
     }
-    (void) write_layer(s->dir, inp, idx, (const mpz_t *) zero,
-                       (const mpz_t *) one, nrows, ncols);
+
+    (void) write_clt_layer(s->dir, inp, idx, (const mpz_t *) zero,
+                           (const mpz_t *) one, nrows, ncols);
 
     for (int i = 0; i < nrows * ncols; ++i) {
         mpz_clears(zero[i], one[i], NULL);
     }
     free(zero);
     free(one);
+
+}
+
+//
+// Encode N layers across all slots of the MLM
+//
+static PyObject *
+obf_encode_layers(PyObject *self, PyObject *args)
+{
+    PyObject *py_zero_ms, *py_one_ms;
+    PyObject *py_zero_set, *py_one_set;
+    PyObject *py_state;
+    int zero_indices[2], one_indices[2];
+    int pows[] = {1, 1};
+    long inp, idx, nrows, ncols;
+    double start, end;
+    struct state *s;
+
+    if (!PyArg_ParseTuple(args, "OllllOOOO", &py_state, &idx, &nrows, &ncols,
+                          &inp, &py_zero_ms, &py_one_ms, &py_zero_set,
+                          &py_one_set))
+        return NULL;
+
+    s = (struct state *) PyCapsule_GetPointer(py_state, NULL);
+    if (s == NULL)
+        return NULL;
+
+    start = current_time();
+
+    (void) extract_indices(py_zero_set, &zero_indices[0], &zero_indices[1]);
+    (void) extract_indices(py_one_set, &one_indices[0], &one_indices[1]);
+
+    switch (s->mlm.choice) {
+    case CLT:
+        encode_layers_clt(s, inp, idx, nrows, ncols, py_zero_ms, py_one_ms,
+                          zero_indices, one_indices, pows);
+        break;
+    case GGH:
+        return NULL;
+    default:
+        return NULL;
+    }
 
     end = current_time();
     if (g_verbose)

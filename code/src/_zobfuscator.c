@@ -142,28 +142,28 @@ obf_encode_circuit(PyObject *self, PyObject *args)
         set_indices_pows(indices, pows, 1, 2 * i, 1);
         mpz_set_ui(elems[0], 0);
         mpz_set(elems[1], alphas[i]);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "x_%d_0", i);
         (void) write_element(s->dir, out, fname);
 
         set_indices_pows(indices, pows, 1, 2 * i, 1);
         mpz_set_ui(elems[0], 1);
         mpz_set_ui(elems[1], 1);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "u_%d_0", i);
         (void) write_element(s->dir, out, fname);
 
         set_indices_pows(indices, pows, 1, 2 * i + 1, 1);
         mpz_set_ui(elems[0], 1);
         mpz_set(elems[1], alphas[i]);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "x_%d_1", i);
         (void) write_element(s->dir, out, fname);
 
         set_indices_pows(indices, pows, 1, 2 * i + 1, 1);
         mpz_set_ui(elems[0], 1);
         mpz_set_ui(elems[1], 1);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "u_%d_1", i);
         (void) write_element(s->dir, out, fname);
 
@@ -172,13 +172,13 @@ obf_encode_circuit(PyObject *self, PyObject *args)
 
         set_indices_pows(indices, pows, 3, 2 * i + 1, deg, 2 * n + i, 1,
                          3 * n + i, 1);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 3, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 3, indices, pows);
         (void) snprintf(fname, fnamelen, "z_%d_0", i);
         (void) write_element(s->dir, out, fname);
 
         set_indices_pows(indices, pows, 1, 3 * n + i, 1);
         mpz_set_ui(elems[0], 0);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "w_%d_0", i);
         (void) write_element(s->dir, out, fname);
 
@@ -186,13 +186,13 @@ obf_encode_circuit(PyObject *self, PyObject *args)
         mpz_urandomm(elems[1], s->mlm.rng, s->nchk);
 
         set_indices_pows(indices, pows, 3, 2 * i, deg, 2 * n + i, 1, 3 * n + i, 1);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 3, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 3, indices, pows);
         (void) snprintf(fname, fnamelen, "z_%d_1", i);
         (void) write_element(s->dir, out, fname);
 
         set_indices_pows(indices, pows, 1, 3 * n + i, 1);
         mpz_set_ui(elems[0], 0);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "w_%d_1", i);
         (void) write_element(s->dir, out, fname);
 
@@ -209,7 +209,7 @@ obf_encode_circuit(PyObject *self, PyObject *args)
             mpz_mod(elems[0], elems[0], s->nev);
         }
         mpz_set(elems[1], betas[i]);
-        clt_mlm_encode(&s->mlm, out, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, out, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) snprintf(fname, fnamelen, "y_%d", i);
         (void) write_element(s->dir, out, fname);
         mpz_clears(out, elems[0], elems[1], NULL);
@@ -219,7 +219,7 @@ obf_encode_circuit(PyObject *self, PyObject *args)
         mpz_t elems[2];
         mpz_init_set_ui(elems[0], 1);
         mpz_init_set_ui(elems[1], 1);
-        clt_mlm_encode(&s->mlm, tmp, 2, elems, 1, indices, pows);
+        clt_mlm_encode(&s->mlm, tmp, 2, (const mpz_t *) elems, 1, indices, pows);
         (void) write_element(s->dir, tmp, "v");
         mpz_clears(elems[0], elems[1], NULL);
     }
@@ -237,7 +237,8 @@ obf_encode_circuit(PyObject *self, PyObject *args)
             (void) circ_copy_circuit(circuit, circname);
             free(circname);
         }
-        (void) circ_evaluate(c, alphas, betas, c_star, s->mlm.q);
+        (void) circ_evaluate(c, (const mpz_t *) alphas, (const mpz_t *) betas,
+                             c_star, s->mlm.q);
         circ_cleanup(c);
     }
 
@@ -264,7 +265,8 @@ obf_encode_circuit(PyObject *self, PyObject *args)
         // Encode against these indices/powers
         mpz_init_set_ui(elems[0], 0);
         mpz_init_set(elems[1], c_star);
-        clt_mlm_encode(&s->mlm, tmp, 2, elems, 3 * n + 1, indices, pows);
+        clt_mlm_encode(&s->mlm, tmp, 2, (const mpz_t *) elems, 3 * n + 1,
+                       indices, pows);
     }
     (void) write_element(s->dir, tmp, "c_star");
 
@@ -336,7 +338,10 @@ obf_evaluate(PyObject *self, PyObject *args)
         struct circuit *c;
 
         c = circ_parse(circuit);
-        (void) circ_evaluate_encoding(c, xs, xones, ys, yones, c_1, q);
+        (void) circ_evaluate_encoding(c, (const mpz_t *) xs,
+                                      (const mpz_t *) xones,
+                                      (const mpz_t *) ys,
+                                      (const mpz_t *) yones, c_1, q);
         circ_cleanup(c);
     }
 

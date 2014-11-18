@@ -24,6 +24,18 @@ py_to_mpz(mpz_t out, PyObject *in)
 }
 
 PyObject *
+fmpz_mod_poly_to_py(const fmpz_mod_poly_t in)
+{
+    return NULL;
+}
+
+void
+py_to_fmpz_mod_poly(fmpz_mod_poly_t out, PyObject *in)
+{
+    
+}
+
+PyObject *
 obf_verbose(PyObject *self, PyObject *args)
 {
     PyObject *py_verbose;

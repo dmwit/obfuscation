@@ -17,6 +17,10 @@ def pad(array, length, bplength):
 class AGISObfuscator(Obfuscator):
     def __init__(self, mlm='CLT', verbose=False):
         super(AGISObfuscator, self).__init__(_obf, mlm=mlm, verbose=verbose)
+        self._mlm_dict = {
+            'CLT': self._gen_clt_mlm_params,
+            'GGH': self._gen_ggh_mlm_params,
+        }
 
     def _gen_clt_mlm_params(self, secparam, kappa, width, nzs, directory):
         self.logger('Generating MLM parameters...')
@@ -29,18 +33,22 @@ class AGISObfuscator(Obfuscator):
         self.logger('Took: %f' % (end - start))
         return primes
 
-    def _gen_ggh_mlm_params(self, secparam, kappa, width, directory):
+    def _gen_ggh_mlm_params(self, secparam, kappa, width, nzs, directory):
         self.logger('Generating GGH parameters...')
         start = time.time()
-        self._state = _obf.setup_ggh(secparam, kappa, width, directory)
+        self._state, prime = _obf.setup_ggh(secparam, kappa, width, directory)
         end = time.time()
         self.logger('Took: %f' % (end - start))
+        return [prime]
 
-    def _construct_bps(self, bpclass, nslots, circuit, primes, obliviate):
-        self.logger('Constructing %d BP%s...' % (nslots, '' if nslots == 1 else 's'))
+    def _gen_mlm_params(self, secparam, kappa, width, nzs, directory):
+        return self._mlm_dict[self._mlm](secparam, kappa, width, nzs, directory)
+
+    def _construct_bps(self, bpclass, num, circuit, obliviate):
+        self.logger('Constructing %d BP%s...' % (num, '' if num == 1 else 's'))
         start = time.time()
         bps = []
-        for _, prime in zip(xrange(nslots), primes):
+        for _ in xrange(num):
             bp = bpclass(circuit, verbose=self._verbose, obliviate=obliviate)
             bp.set_straddling_sets()
             bps.append(bp)
@@ -48,19 +56,18 @@ class AGISObfuscator(Obfuscator):
         self.logger('Took: %f' % (end - start))
         return bps
 
-    def _construct_bookend_vectors(self, bps, primes, nzs):
-        def compute_vectors():
+    def _construct_bookend_vectors(self, bps, num, nzs):
+        def compute_vectors(bps, num):
             start = time.time()
-            length = len(primes)
             bplength = len(bps[0].s)
-            ss = pad([to_long(bp.s * bp.m0i) for bp in bps], length, bplength)
-            ts = pad([to_long(bp.m0 * bp.t) for bp in bps], length, bplength)
+            ss = pad([to_long(bp.s * bp.m0i) for bp in bps], num, bplength)
+            ts = pad([to_long(bp.m0 * bp.t) for bp in bps], num, bplength)
             end = time.time()
             self.logger('  Computing bookend vectors: %f' % (end - start))
             return ss, ts
         self.logger('Constructing bookend vectors...')
         start = time.time()
-        ss, ts = compute_vectors()
+        ss, ts = compute_vectors(bps, num)
         _obf.encode_vectors(self._state, ss, [nzs - 2], 's_enc')
         _obf.encode_vectors(self._state, ts, [nzs - 1], 't_enc')
         end = time.time()
@@ -75,15 +82,15 @@ class AGISObfuscator(Obfuscator):
         end = time.time()
         self.logger('Took: %f' % (end - start))
 
-    def _obfuscate(self, bps, length):
+    def _obfuscate(self, bps, num):
         for i in xrange(len(bps[0])):
             self.logger('Obfuscating layer...')
             start = time.time()
             bplength = len(bps[0][i].zero.transpose().list())
             zeros = pad([to_long(bp[i].zero.transpose().list()) for bp in bps],
-                        length, bplength)
+                        num, bplength)
             ones = pad([to_long(bp[i].one.transpose().list()) for bp in bps],
-                       length, bplength)
+                       num, bplength)
             nrows = bps[0][i].zero.nrows()
             ncols = bps[0][i].zero.ncols()
             _obf.encode_layers(self._state, i, nrows, ncols, bps[0][i].inp,
@@ -111,16 +118,16 @@ class AGISObfuscator(Obfuscator):
         # width is the column/row-length of the matrices
         width = bp.size
 
-        if self._mlm == 'CLT':
-            primes = self._gen_clt_mlm_params(secparam, kappa, width, nzs,
-                                              directory)
-        else:
-            primes = self._gen_ggh_mlm_params(secparam, kappa, width, directory)
-        bps = self._construct_bps(AGISBranchingProgram, nslots, circuit,
-                                  primes, obliviate)
+
+        primes = self._gen_mlm_params(secparam, kappa, width, nzs, directory)
+        num = min(nslots, len(primes))
+        if self._mlm == 'GGH':
+            primes = [2L]
+
+        bps = self._construct_bps(AGISBranchingProgram, num, circuit, obliviate)
         self._randomize(secparam, bps, primes)
-        self._construct_bookend_vectors(bps, primes, nzs)
-        self._obfuscate(bps, len(primes))
+        self._construct_bookend_vectors(bps, num, nzs)
+        self._obfuscate(bps, num)
 
         end = time.time()
         self.logger('Obfuscation took: %f' % (end - start))

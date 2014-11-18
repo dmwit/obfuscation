@@ -1,9 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env sage
 
 from setuptools import setup, Extension
 import os
 
 libraries = [
+    'flint',
     'gmp',
     'gomp',
 ]
@@ -11,12 +12,12 @@ compile_args = [
     '-fopenmp',
     '-O3',
     '-Wall',
+    # '-pedantic-errors',
     '--std=gnu99',
     '-Isrc/gghlite-flint',
     '-Isrc/gghlite-flint/dgs',
     '-Isrc/gghlite-flint/dgs/dgs',
-    '-Isrc/gghlite-flint/flint',
-    '-DFLINT_CPIMPORT="src/gghlite-flint/flint/qadic/CPimport.txt"',
+    '-L/usr/local/lib',
 ]
 
 gghlite_srcs = []

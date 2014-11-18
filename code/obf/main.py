@@ -62,9 +62,6 @@ def obf(args):
         obfclass = AGISObfuscator
 
     if args.test_circuit:
-        if args.attack:
-            print("%s --attack flag cannot be run with --test-circuit flag" % errorstr)
-            sys.exit(1)
         test_circuit(args.test_circuit, bpclass, obfclass, True, args)
     elif args.test_all:
         test_all(args, bpclass, obfclass, True)
@@ -87,15 +84,6 @@ def obf(args):
             print("%s One of --load-obf, --load-circuit, or --test-circuit must be used" % errorstr)
             sys.exit(1)
 
-        if args.attack:
-            assert directory
-            obf = obfclass(verbose=args.verbose)
-            try:
-                r = obf.attack(directory, args.secparam, args.nslots)
-            except AttributeError:
-                print("%s --attack flag unavailable.  Make sure you compile with ATTACK = 1 in setup.py" % errorstr)
-                sys.exit(1)
-            print('g_1 extracted from attack: %d' % r)
         if args.eval:
             assert directory
             obf = obfclass(verbose=args.verbose)
@@ -134,8 +122,6 @@ def main():
     parser_obf = subparsers.add_parser(
         'obf',
         help='commands for obfuscating a circuit/branching program')
-    parser_obf.add_argument('--attack', action='store_true',
-                            help='attack obfuscation')
     parser_obf.add_argument('--eval', metavar='INPUT', type=str, action='store',
                             help='evaluate obfuscation on INPUT')
     parser_obf.add_argument('--kappa', metavar='N', type=int,

@@ -3,4 +3,7 @@
 import obf
 from obf.main import main
 
-main()
+try:
+    main()
+except KeyboardInterrupt:
+    pass

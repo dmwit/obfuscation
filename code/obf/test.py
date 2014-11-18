@@ -10,7 +10,7 @@ parseerrstr = '\x1b[33mParse Error:\x1b[0m'
 
 def test_obfuscation(path, cls, testcases, args):
     success = True
-    obf = cls(verbose=args.verbose)
+    obf = cls(mlm=args.mlm, verbose=args.verbose)
     directory = args.save if args.save \
                 else '%s.obf.%d' % (path, args.secparam)
     obf.obfuscate(path, args.secparam, directory, obliviate=args.obliviate,

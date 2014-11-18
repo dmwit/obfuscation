@@ -8,7 +8,7 @@
 
 /* Python internals for pylong */
 
-#include <longintrepr.h>
+#include <python2.7/longintrepr.h>
 typedef int py_size_t; /* what python uses for ob_size */
 
 /************************************************************/
