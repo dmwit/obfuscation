@@ -35,4 +35,4 @@ class SZObfuscator(AGISObfuscator):
             _obf.max_mem_usage()
 
     def evaluate(self, directory, inp):
-        return self._evaluate(directory, inp, _obf.sz_evaluate, _obf)
+        return self._evaluate(directory, inp, _obf.evaluate_sz, _obf)

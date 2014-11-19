@@ -132,7 +132,7 @@ class AGISObfuscator(Obfuscator):
             _obf.max_mem_usage()
 
     def evaluate(self, directory, inp):
-        return self._evaluate(directory, inp, _obf.evaluate, _obf)
+        return self._evaluate(directory, inp, _obf.evaluate_agis, _obf)
 
     def cleanup(self):
         _obf.cleanup(self._state)

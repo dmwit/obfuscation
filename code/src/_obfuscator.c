@@ -326,25 +326,7 @@ obf_encode_layers(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-obf_sz_evaluate(PyObject *self, PyObject *args)
-{
-    char *dir, *input;
-    long bplen;
-    int iszero;
-
-    if (!PyArg_ParseTuple(args, "ssl", &dir, &input, &bplen))
-        return NULL;
-
-    iszero = evaluate_sz(dir, input, bplen);
-
-    if (iszero == -1)
-        return NULL;
-    else
-        return Py_BuildValue("i", iszero ? 0 : 1);
-}
-
-static PyObject *
-obf_evaluate(PyObject *self, PyObject *args)
+obf_evaluate_agis(PyObject *self, PyObject *args)
 {
     char *dir, *input;
     long bplen;
@@ -361,6 +343,23 @@ obf_evaluate(PyObject *self, PyObject *args)
         return Py_BuildValue("i", iszero ? 0 : 1);
 }
 
+static PyObject *
+obf_evaluate_sz(PyObject *self, PyObject *args)
+{
+    char *dir, *input;
+    long bplen;
+    int iszero;
+
+    if (!PyArg_ParseTuple(args, "ssl", &dir, &input, &bplen))
+        return NULL;
+
+    iszero = evaluate_sz(dir, input, bplen);
+
+    if (iszero == -1)
+        return NULL;
+    else
+        return Py_BuildValue("i", iszero ? 0 : 1);
+}
 
 static PyObject *
 obf_cleanup(PyObject *self, PyObject *args)
@@ -405,10 +404,10 @@ ObfMethods[] = {
      "Print out the maximum memory usage."},
     {"cleanup", obf_cleanup, METH_VARARGS,
      "Clean up objects created during setup."},
-    {"evaluate", obf_evaluate, METH_VARARGS,
-     "evaluate the obfuscation."},
-    {"sz_evaluate", obf_sz_evaluate, METH_VARARGS,
-     "evaluate the obfuscation."},
+    {"evaluate_agis", obf_evaluate_agis, METH_VARARGS,
+     "evaluate the obfuscation using AGIS."},
+    {"evaluate_sz", obf_evaluate_sz, METH_VARARGS,
+     "evaluate the obfuscation using SZ."},
     {NULL, NULL, 0, NULL}
 };
 
