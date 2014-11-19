@@ -107,6 +107,9 @@ def main():
                            help='test BP conversion for FILE')
     parser_bp.add_argument('--test-all', metavar='DIR', nargs='?', const='circuits',
                            help='test BP conversion for all circuits in DIR (default: %(const)s)')
+    parser_bp.add_argument('--mlm', metavar='MLM', type=str, default='CLT',
+                           action='store',
+                           help='use multilinear map MLM [either CLT or GGH] (default: %(default)s)')
     parser_bp.add_argument('--secparam', metavar='N', type=int, action='store',
                            default=24, help='security parameter (default: %(default)s)')
     parser_bp.add_argument('--obliviate', action='store_true',

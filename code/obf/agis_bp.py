@@ -2,6 +2,7 @@ import networkx as nx
 from bp import AbstractBranchingProgram, Layer
 from circuit import parse, ParseException
 from sage.all import copy, GF, MatrixSpace, VectorSpace, ZZ
+from sage.all import PolynomialRing
 
 class _Graph(object):
     def __init__(self, inp, graph, nlayers, num):
@@ -273,27 +274,37 @@ class AGISBranchingProgram(AbstractBranchingProgram):
             self.bp.append(Layer(graph.inp(layer), zero, one))
         self.zero = G.one()
 
-    def randomize(self, prime):
-        assert not self.randomized
-        MSZp = MatrixSpace(ZZ.residue_field(ZZ.ideal(prime)), self.size)
+    def _randomize(self, mod, matspace, vecspace):
         def random_matrix():
             while True:
-                m = MSZp.random_element()
+                m = matspace.random_element()
                 if not m.is_singular() and m.rank() == self.size:
                     return m, m.inverse()
         m0, m0i = random_matrix()
-        self.bp[0] = self.bp[0].group(MSZp, prime).mult_left(m0)
+        self.bp[0] = self.bp[0].group(matspace, mod).mult_left(m0)
         for i in xrange(1, len(self.bp)):
             mi, mii = random_matrix()
-            self.bp[i-1] = self.bp[i-1].group(MSZp, prime).mult_right(mii)
-            self.bp[i] = self.bp[i].group(MSZp, prime).mult_left(mi)
-        self.bp[-1] = self.bp[-1].group(MSZp, prime).mult_right(m0i)
-        VSZp = VectorSpace(ZZ.residue_field(ZZ.ideal(prime)), self.size)
-        self.s = copy(VSZp.zero())
+            self.bp[i-1] = self.bp[i-1].group(matspace, mod).mult_right(mii)
+            self.bp[i] = self.bp[i].group(matspace, mod).mult_left(mi)
+        self.bp[-1] = self.bp[-1].group(matspace, mod).mult_right(m0i)
+        self.s = copy(vecspace.zero())
         self.s[0] = 1
-        self.t = copy(VSZp.zero())
+        self.t = copy(vecspace.zero())
         self.t[len(self.t) - 1] = 1
         self.m0, self.m0i = m0, m0i
+
+    def randomize(self, mod, mlm='CLT'):
+        assert mlm in ('CLT', 'GGH')
+        assert not self.randomized
+        if mlm == 'CLT':
+            R = ZZ.residue_field(ZZ.ideal(mod))
+        else:
+            P = PolynomialRing(ZZ, 'x')
+            I = P.ideal(mod)
+            R = QuotientSpace(P, I)
+        matspace = MatrixSpace(R, self.size)
+        vecspace = VectorSpace(R, self.size)
+        self._randomize(mod, matspace, vecspace)
         self.randomized = True
 
     def _eval_layered_bp(self, x):

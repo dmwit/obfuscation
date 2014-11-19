@@ -4,6 +4,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include <oz/flint-addons.h>
+
 int g_verbose;
 
 double
@@ -21,31 +23,52 @@ current_time(void)
 #  define RANDFILE "/dev/urandom"
 #endif
 
-int
-seed_rng(gmp_randstate_t *rng)
+static unsigned long
+get_seed(void)
 {
     int file;
+    unsigned long seed;
     if ((file = open(RANDFILE, O_RDONLY)) == -1) {
         (void) fprintf(stderr, "Error opening %s\n", RANDFILE);
         return 1;
     } else {
-        unsigned long seed;
         if (read(file, &seed, sizeof seed) == -1) {
             (void) fprintf(stderr, "Error reading from %s\n", RANDFILE);
             (void) close(file);
-            return 1;
+            return 0;
         } else {
             if (g_verbose)
                 (void) fprintf(stderr, "  Seed: %lu\n", seed);
-
-            gmp_randinit_default(*rng);
-            gmp_randseed_ui(*rng, seed);
         }
     }
     if (file != -1)
         (void) close(file);
+    return seed;
+}
+
+int
+seed_gmp_rng(gmp_randstate_t *rng)
+{
+    unsigned long seed;
+    seed = get_seed();
+    if (seed == 0)
+        return 1;
+    gmp_randinit_default(*rng);
+    gmp_randseed_ui(*rng, seed);
     return 0;
 }
+
+int
+seed_flint_rng(flint_rand_t *rng)
+{
+    unsigned long seed;
+    seed = get_seed();
+    if (seed == 0)
+        return 1;
+    flint_randinit_seed(*rng, 0, 1); /* XXX: set seed to 0 for now */
+    return 0;
+}
+
 
 int
 load_mpz_scalar(const char *fname, mpz_t x)

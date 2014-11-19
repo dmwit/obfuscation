@@ -77,7 +77,7 @@ class AGISObfuscator(Obfuscator):
         self.logger('Randomizing BPs...')
         start = time.time()
         for bp, prime in zip(bps, primes):
-            bp.randomize(prime)
+            bp.randomize(prime, mlm=self._mlm)
             bp.set_straddling_sets()
         end = time.time()
         self.logger('Took: %f' % (end - start))
@@ -118,11 +118,8 @@ class AGISObfuscator(Obfuscator):
         # width is the column/row-length of the matrices
         width = bp.size
 
-
         primes = self._gen_mlm_params(secparam, kappa, width, nzs, directory)
         num = min(nslots, len(primes))
-        if self._mlm == 'GGH':
-            primes = [2L]
 
         bps = self._construct_bps(AGISBranchingProgram, num, circuit, obliviate)
         self._randomize(secparam, bps, primes)

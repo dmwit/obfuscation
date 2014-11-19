@@ -5,7 +5,7 @@
 
 struct ggh_mlm_state {
     flint_rand_t rng;
-    gghlite_t ggh;
+    gghlite_t params;
 };
 
 void

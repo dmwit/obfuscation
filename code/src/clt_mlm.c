@@ -88,7 +88,7 @@ clt_mlm_setup(struct clt_mlm_state *s, const char *dir, const long *pows,
     zs = (mpz_t *) malloc(sizeof(mpz_t) * s->nzs);
     s->zinvs = (mpz_t *) malloc(sizeof(mpz_t) * s->nzs);
 
-    seed_rng(&s->rng);
+    seed_gmp_rng(&s->rng);
 
     /* initialize gmp variables */
     mpz_init_set_ui(s->q, 1);

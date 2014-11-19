@@ -13,7 +13,10 @@ double
 current_time(void);
 
 int
-seed_rng(gmp_randstate_t *rng);
+seed_gmp_rng(gmp_randstate_t *rng);
+
+int
+seed_flint_rng(flint_rand_t *rng);
 
 int
 load_mpz_scalar(const char *fname, mpz_t x);

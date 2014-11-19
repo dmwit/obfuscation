@@ -57,11 +57,13 @@ obfuscator = Extension(
         'src/clt_mlm.c',
         'src/clt_utils.c',
         'src/ggh_mlm.c',
-        'src/_obfuscator.c',
         'src/mpn_pylong.c',
         'src/mpz_pylong.c',
         'src/pyutils.c',
         'src/utils.c',
+
+        'src/_obfuscator_c.c',
+        'src/_obfuscator.c',
     ] + gghlite_srcs
 )
 

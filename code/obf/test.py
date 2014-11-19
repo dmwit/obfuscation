@@ -8,7 +8,7 @@ __all__ = ['test_circuit']
 failstr = '\x1b[31mFail\x1b[0m'
 parseerrstr = '\x1b[33mParse Error:\x1b[0m'
 
-def test_obfuscation(path, cls, testcases, args):
+def _test_obfuscation(path, cls, testcases, args):
     success = True
     obf = cls(mlm=args.mlm, verbose=args.verbose)
     directory = args.save if args.save \
@@ -22,15 +22,15 @@ def test_obfuscation(path, cls, testcases, args):
             success = False
     return success
 
-def test_bp(path, cls, testcases, args):
+def _test_bp(path, cls, testcases, args):
     success = True
     try:
         if args.zimmerman:
             c = cls(path, verbose=args.verbose)
         else:
-            prime = random_prime(2 ** args.secparam - 1)
             c = cls(path, verbose=args.verbose, obliviate=args.obliviate)
-            c.randomize(prime)
+            prime = random_prime(2 ** args.secparam - 1)
+            c.randomize(prime, mlm=args.mlm)
     except ParseException as e:
         print('%s %s' % (parseerrstr, e))
         return False
@@ -57,9 +57,9 @@ def test_circuit(path, cclass, obfclass, obfuscate, args):
         print('no test cases')
         return
     if obfuscate:
-        success = test_obfuscation(path, obfclass, testcases, args)
+        success = _test_obfuscation(path, obfclass, testcases, args)
     else:
-        success = test_bp(path, cclass, testcases, args)
+        success = _test_bp(path, cclass, testcases, args)
     if success:
         print('\x1b[32mPass\x1b[0m')
     return success
