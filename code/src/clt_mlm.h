@@ -4,7 +4,7 @@
 #include <gmp.h>
 
 struct clt_mlm_state {
-	gmp_randstate_t rng;
+    gmp_randstate_t rng;
     unsigned long secparam;
     unsigned long n;
     unsigned long nzs;
@@ -26,8 +26,8 @@ clt_mlm_cleanup(struct clt_mlm_state *s);
 
 void
 clt_mlm_encode(struct clt_mlm_state *s, mpz_t out, size_t nins,
-			   const mpz_t *ins, unsigned int nzs, const int *indices,
-			   const int *pows);
+               const mpz_t *ins, unsigned int nzs, const int *indices,
+               const int *pows);
 
 void
 clt_mlm_add(const struct clt_mlm_state *s, mpz_t out, const mpz_t a,

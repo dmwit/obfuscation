@@ -155,7 +155,12 @@ clt_mlm_setup(struct clt_mlm_state *s, const char *dir, const long *pows,
         do {
             mpz_urandomm(zs[i], s->rng, s->q);
         } while (mpz_invert(s->zinvs[i], zs[i], s->q) == 0);
+        /* break; */
     }
+    /* for (unsigned long i = 1; i < s->nzs; ++i) { */
+    /*     mpz_set(zs[i], zs[0]); */
+    /*     mpz_set(s->zinvs[i], s->zinvs[0]); */
+    /* } */
     end = current_time();
     if (g_verbose)
         (void) fprintf(stderr, "  Generating z_i's: %f\n", end - start);

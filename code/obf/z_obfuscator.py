@@ -103,8 +103,10 @@ class Circuit(object):
 
 
 class ZObfuscator(Obfuscator):
-    def __init__(self, verbose=False):
-        super(ZObfuscator, self).__init__(_zobf, verbose=verbose)
+    def __init__(self, mlm='CLT', verbose=False):
+        if mlm != 'CLT':
+            raise Exception("Zimmerman's approach only supports CLT MLM")
+        super(ZObfuscator, self).__init__(_zobf, mlm=mlm, verbose=verbose)
 
     def _gen_mlm_params(self, secparam, kappa, nzs, pows, directory):
         self.logger('Generating MLM parameters...')

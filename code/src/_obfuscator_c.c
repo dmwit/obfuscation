@@ -152,9 +152,11 @@ evaluate_agis(const char *dir, const char *input, long bplen)
 
     if (!err) {
         start = current_time();
-        (void) snprintf(fname, fnamelen, "%s/t_enc", dir);
-        (void) load_mpz_vector(fname, t, size);
-        clt_mul_vect_by_vect(tmp, (const mpz_t *) s, (const mpz_t *) t, q, size);
+        {
+            (void) snprintf(fname, fnamelen, "%s/t_enc", dir);
+            (void) load_mpz_vector(fname, t, size);
+            clt_mul_vect_by_vect(tmp, (const mpz_t *) s, (const mpz_t *) t, q, size);
+        }
         end = current_time();
         if (g_verbose)
             (void) fprintf(stderr, " Multiplying vectors: %f\n",
