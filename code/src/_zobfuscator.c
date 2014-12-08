@@ -97,6 +97,7 @@ obf_encode_circuit(PyObject *self, PyObject *args)
     int fnamelen = sizeof(int) + 5;
     int idx_set_size;
     struct state *s;
+    int err = 0;
 
     if (!PyArg_ParseTuple(args, "OsOOiii", &py_state, &circuit, &py_ys,
                           &py_xdegs, &ydeg, &n, &m))
@@ -224,24 +225,35 @@ obf_encode_circuit(PyObject *self, PyObject *args)
         mpz_clears(elems[0], elems[1], NULL);
     }
 
+    /* Evaluate circuit to compute C* value */
     {
         struct circuit *c;
+        int circnamelen;
+        char *circname;
+        int out;
 
         c = circ_parse(circuit);
-        {
-            int circnamelen;
-            char *circname;
-            circnamelen = strlen(s->dir) + strlen("/circuit") + 2;
-            circname = (char *) malloc(sizeof(char) * circnamelen);
-            (void) snprintf(circname, circnamelen, "%s/circuit", s->dir);
-            (void) circ_copy_circuit(circuit, circname);
-            free(circname);
+        if (c == NULL) {
+            PyErr_SetString(PyExc_RuntimeError, "Failed to parse circuit");
+            err = 1;
+            goto cleanup;
         }
-        (void) circ_evaluate(c, (const mpz_t *) alphas, (const mpz_t *) betas,
-                             c_star, s->mlm.q);
+        circnamelen = strlen(s->dir) + strlen("/circuit") + 2;
+        circname = (char *) malloc(sizeof(char) * circnamelen);
+        (void) snprintf(circname, circnamelen, "%s/circuit", s->dir);
+        (void) circ_copy_circuit(circuit, circname);
+        free(circname);
+        out = circ_evaluate(c, (const mpz_t *) alphas, (const mpz_t *) betas,
+                            c_star, s->mlm.q);
         circ_cleanup(c);
+        if (out) {
+            PyErr_SetString(PyExc_RuntimeError, "Failed to evaluate circuit");
+            err = 1;
+            goto cleanup;
+        }
     }
 
+    /* Encode computed C* value */
     {
         mpz_t elems[2];
         // The C* encoding contains everything but the W_i symbols.
@@ -270,9 +282,14 @@ obf_encode_circuit(PyObject *self, PyObject *args)
     }
     (void) write_element(s->dir, tmp, "c_star");
 
+cleanup:
     mpz_clears(c_star, tmp, NULL);
-    
-    Py_RETURN_NONE;
+
+    if (err) {
+        return NULL;
+    } else {
+        Py_RETURN_NONE;
+    }
 }
 
 static PyObject *
@@ -284,6 +301,7 @@ obf_evaluate(PyObject *self, PyObject *args)
     int iszero;
     mpz_t c_1, c_2, q, z, w;
     mpz_t *xs, *xones, *ys, *yones;
+    int err = 0;
 
     if (!PyArg_ParseTuple(args, "sssll", &dir, &circuit, &input, &n, &m))
         return NULL;
@@ -336,13 +354,19 @@ obf_evaluate(PyObject *self, PyObject *args)
     // Evaluate the circuit on x_1, ..., x_n
     {
         struct circuit *c;
+        int out;
 
         c = circ_parse(circuit);
-        (void) circ_evaluate_encoding(c, (const mpz_t *) xs,
-                                      (const mpz_t *) xones,
-                                      (const mpz_t *) ys,
-                                      (const mpz_t *) yones, c_1, q);
+        out = circ_evaluate_encoding(c, (const mpz_t *) xs,
+                                     (const mpz_t *) xones,
+                                     (const mpz_t *) ys,
+                                     (const mpz_t *) yones, c_1, q);
         circ_cleanup(c);
+        if (out) {
+            PyErr_SetString(PyExc_RuntimeError, "Failed to evaluate encoded circuit");
+            err = 1;
+            goto cleanup;
+        }
     }
 
     // Load in c_2
@@ -374,6 +398,7 @@ obf_evaluate(PyObject *self, PyObject *args)
         mpz_clears(tmp, pzt, nu, NULL);
     }
 
+cleanup:
     free(fname);
     for (int i = 0; i < m; ++i) {
         mpz_clears(ys[i], yones[i], NULL);
@@ -387,7 +412,10 @@ obf_evaluate(PyObject *self, PyObject *args)
     free(xones);
     mpz_clears(c_1, c_2, q, z, w, NULL);
 
-    return Py_BuildValue("i", iszero ? 0 : 1);
+    if (err)
+        return NULL;
+    else
+        return Py_BuildValue("i", iszero ? 0 : 1);
 }
 
 static PyMethodDef

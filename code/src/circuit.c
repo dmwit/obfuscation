@@ -9,12 +9,15 @@ enum gate_type {
     INPUT_X,
     INPUT_Y,
     MUL,
+    MUL_CONST,
 };
 
 struct gate {
+    int initialized;
     enum gate_type type;
     mpz_t value;
     mpz_t one_value;
+    mpz_t const_value;
     struct gate *left;
     struct gate *right;
     struct gate *out;
@@ -31,19 +34,31 @@ static void
 gate_init(struct gate *gate, enum gate_type type, struct gate *left,
           struct gate *right)
 {
+    gate->initialized = 1;
     gate->type = type;
     mpz_init(gate->value);
     mpz_init(gate->one_value);
+    mpz_init(gate->const_value);
     gate->left = left;
     gate->right = right;
     gate->out = NULL;
 }
 
 static void
+gate_init_const(struct gate *gate, enum gate_type type, struct gate *in, int c)
+{
+    gate_init(gate, type, in, NULL);
+    mpz_set_ui(gate->const_value, c);
+}
+
+static void
 gate_cleanup(struct gate *gate)
 {
-    mpz_clear(gate->value);
-    mpz_clear(gate->one_value);
+    if (gate->initialized) {
+        mpz_clear(gate->value);
+        mpz_clear(gate->one_value);
+        mpz_clear(gate->const_value);
+    }
 }
 
 static void
@@ -52,7 +67,7 @@ circuit_init(struct circuit *circ, int ngates)
     circ->n_xins = 0;
     circ->n_yins = 0;
     circ->ngates = ngates;
-    circ->gates = (struct gate *) malloc(sizeof(struct gate) * ngates);
+    circ->gates = (struct gate *) calloc(ngates, sizeof(struct gate));
 }
 
 static void
@@ -160,8 +175,11 @@ circ_parse(const char *circname)
             } else if (strcmp(gtype, "MUL") == 0) {
                 gate_init(&circ->gates[num], MUL, &circ->gates[left],
                           &circ->gates[right]);
+            } else if (strcmp(gtype, "MULC") == 0) {
+                gate_init_const(&circ->gates[num], MUL_CONST,
+                                &circ->gates[left], right);
             } else {
-                (void) fprintf(stderr, "error: unknown gate type '%s'", gtype);
+                (void) fprintf(stderr, "error: unknown gate type '%s'\n", gtype);
                 err = 1;
                 goto cleanup;
             }
@@ -254,6 +272,10 @@ circ_evaluate(const struct circuit *circ, const mpz_t *alphas,
             mpz_mul(gate->value, gate->left->value, gate->right->value);
             mpz_mod(gate->value, gate->value, q);
             break;
+        case MUL_CONST:
+            mpz_mul(gate->value, gate->left->value, gate->const_value);
+            mpz_mod(gate->value, gate->value, q);
+            break;
         default:
             (void) fprintf(stderr, "error: unknown gate type!\n");
             return 1;
@@ -290,6 +312,15 @@ multiply(mpz_t out, mpz_t out_one, const mpz_t x, const mpz_t x_one,
     mpz_mod(out_one, out_one, q);
 }
 
+static void
+multiply_const(mpz_t out, mpz_t out_one, const mpz_t in, const mpz_t in_one,
+               const mpz_t c, const mpz_t q)
+{
+    mpz_mul(out, in, c);
+    mpz_mod(out, out, q);
+    mpz_set(out_one, in_one);
+}
+
 int
 circ_evaluate_encoding(const struct circuit *circ, const mpz_t *xs,
                        const mpz_t *xones, const mpz_t *ys, const mpz_t *yones,
@@ -320,6 +351,10 @@ circ_evaluate_encoding(const struct circuit *circ, const mpz_t *xs,
             multiply(gate->value, gate->one_value, gate->left->value,
                      gate->left->one_value, gate->right->value,
                      gate->right->one_value, q);
+            break;
+        case MUL_CONST:
+            multiply_const(gate->value, gate->one_value, gate->left->value,
+                           gate->left->one_value, gate->const_value, q);
             break;
         default:
             (void) fprintf(stderr, "error: unknown gate type!\n");

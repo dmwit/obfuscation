@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import _zobfuscator as _zobf
-from circuit import parse
+from circuit import parse, ParseException
 from obfuscator import Obfuscator
 
 import networkx as nx
@@ -41,9 +41,13 @@ class Circuit(object):
             g.add_node(num, gate='MUL', label=[])
             g.add_edge(x, num)
             g.add_edge(y, num)
+        def _mulc_gate(num, x, const):
+            g.add_node(num, gate='MULC', label=[], const=const)
+            g.add_edge(x, num)
         gates = {
             'ADD': _add_gate,
             'MUL': _mul_gate,
+            'MULC': _mulc_gate,
         }
         gates[gate](num, *inputs)
         self.ngates += 1
@@ -51,11 +55,15 @@ class Circuit(object):
 
     def _compute_degs(self, circ, n_xins, n_yins):
         for k, v in circ.pred.iteritems():
-            assert(0 <= len(v.keys()) <= 2)
+            assert 0 <= len(v.keys()) <= 2
             if len(v.keys()) == 1:
                 p = v.keys()[0]
-                circ.node[k]['label'].extend(circ.node[p]['label'])
-                circ.node[k]['label'].extend(circ.node[p]['label'])
+                if circ.node[k]['gate'] == 'MULC':
+                    circ.node[k]['label'].extend(circ.node[p]['label'])
+                elif circ.node[k]['gate'] == 'MUL':
+                    # We are computing x^2, so include the 'x' label twice
+                    circ.node[k]['label'].extend(circ.node[p]['label'])
+                    circ.node[k]['label'].extend(circ.node[p]['label'])
             else:
                 for p in v.iterkeys():
                     circ.node[k]['label'].extend(circ.node[p]['label'])
@@ -77,27 +85,42 @@ class Circuit(object):
         x = x[::-1]
         assert self.circuit
         g = self.circuit.copy()
+        try:
+            nodes = nx.topological_sort(g)
+        except nx.exception.NetworkXUnfeasible:
+            raise ParseException('Invalid circuit: circuit contains a cycle?')
         for node in nx.topological_sort(g):
             if 'gate' not in g.node[node]:
+                # Node is an input
                 if g.node[node]['label'][0].startswith('x'):
                     g.add_node(node, value=int(x[node]))
                 else:
                     g.add_node(node, value=int(g.node[node]['value']))
-            elif g.node[node]['gate'] in ('ADD', 'MUL'):
-                keys = g.pred[node].keys()
-                if len(keys) == 1:
-                    idx1 = idx2 = keys[0]
-                else:
-                    assert(len(keys) == 2)
-                    idx1 = g.pred[node].keys()[0]
-                    idx2 = g.pred[node].keys()[1]
-                if g.node[node]['gate'] == 'ADD':
-                    value = g.node[idx1]['value'] + g.node[idx2]['value']
-                elif g.node[node]['gate'] == 'MUL':
-                    value = g.node[idx1]['value'] * g.node[idx2]['value']
-                g.add_node(node, value=value)
             else:
-                raise Exception('Unable to evaluate')
+                gate = g.node[node]['gate']
+                value = None
+                if gate in ('ADD', 'MUL'):
+                    keys = g.pred[node].keys()
+                    if len(keys) == 1:
+                        idx1 = idx2 = keys[0]
+                    elif len(keys) == 2:
+                        idx1 = g.pred[node].keys()[0]
+                        idx2 = g.pred[node].keys()[1]
+                    else:
+                        raise ParseException("Too many inputs to gate '%s'" % gate)
+                    if gate == 'ADD':
+                        value = g.node[idx1]['value'] + g.node[idx2]['value']
+                    elif gate == 'MUL':
+                        value = g.node[idx1]['value'] * g.node[idx2]['value']
+                elif gate == 'MULC':
+                    keys = g.pred[node].keys()
+                    assert len(keys) == 1
+                    idx = keys[0]
+                    value = g.node[idx]['value'] * g.node[node]['const']
+                else:
+                    raise ParseException("Unknown gate type '%s'" % gate)
+                assert value is not None
+                g.add_node(node, value=value)
         idx = nx.topological_sort(g)[-1]
         return g.node[idx]['value'] != 0
 
@@ -105,7 +128,7 @@ class Circuit(object):
 class ZObfuscator(Obfuscator):
     def __init__(self, mlm='CLT', verbose=False):
         if mlm != 'CLT':
-            raise Exception("Zimmerman's approach only supports CLT MLM")
+            raise Exception("Zimmerman's approach only supports CLT multilinear map")
         super(ZObfuscator, self).__init__(_zobf, mlm=mlm, verbose=verbose)
 
     def _gen_mlm_params(self, secparam, kappa, nzs, pows, directory):
@@ -147,7 +170,6 @@ class ZObfuscator(Obfuscator):
 
         # XXX: what should kappa be set to!?  For now, we set kappa = nzs, but
         # it appears we can often get away with setting kappa < nzs.
-        # kappa = circ.ngates + circ.n_xins + 1
         if not kappa:
             kappa = nzs
 
