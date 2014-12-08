@@ -172,4 +172,4 @@ class ZObfuscator(Obfuscator):
         return self._evaluate(directory, inp, f, _zobf)
 
     def cleanup(self):
-        _zobf.cleanup(self._state)
+        pass

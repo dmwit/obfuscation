@@ -135,4 +135,4 @@ class AGISObfuscator(Obfuscator):
         return self._evaluate(directory, inp, _obf.evaluate_agis, _obf)
 
     def cleanup(self):
-        _obf.cleanup(self._state)
+        pass
