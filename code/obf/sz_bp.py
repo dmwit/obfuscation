@@ -124,8 +124,11 @@ class SZBranchingProgram(AbstractBranchingProgram):
                             'Line %d: incorrect number of arguments given' % lineno)
         return bp[-1]
 
-    def randomize(self, prime):
+    def randomize(self, prime, mlm='CLT'):
+        assert mlm in ('CLT', 'GGH')
         assert not self.randomized
+        if mlm != 'CLT':
+            raise Exception('Non-CLT multilinear maps not yet supported')
         prev = None
         for i in xrange(0, len(self.bp)):
             d_i_minus_one = self.bp[i].zero.nrows()

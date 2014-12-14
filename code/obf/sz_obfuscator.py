@@ -5,8 +5,8 @@ from sz_bp import SZBranchingProgram
 import time
 
 class SZObfuscator(AGISObfuscator):
-    def __init__(self, verbose=False):
-        super(SZObfuscator, self).__init__(verbose=verbose)
+    def __init__(self, mlm='CLT', verbose=False):
+        super(SZObfuscator, self).__init__(mlm=mlm, verbose=verbose)
 
     def obfuscate(self, circuit, secparam, directory, obliviate=False,
                   nslots=None, kappa=None):
@@ -24,8 +24,7 @@ class SZObfuscator(AGISObfuscator):
         nzs = bp.set_straddling_sets()
 
         primes = self._gen_mlm_params(secparam, kappa, 0, nzs, directory)
-        bps = self._construct_bps(SZBranchingProgram, nslots, circuit, primes,
-                                  obliviate)
+        bps = self._construct_bps(SZBranchingProgram, nslots, circuit, obliviate)
         self._randomize(secparam, bps, primes)
         self._obfuscate(bps, len(primes))
 
