@@ -29,18 +29,15 @@ def arithmetic_point(bitlength):
         for i in xrange(bitlength):
             f.write('%d input x%d\n' % (num, i))
             num += 1
-        dbl = 1
-        for i in xrange(bitlength - 1):
-            f.write('%d input y%d %d\n' % (num, i, 2**dbl))
-            dbl += 1
-            num += 1
-        f.write('%d input y%d -%d\n' % (num, bitlength - 1, secret))
+        f.write('%d input y0 -%d\n' % (num, secret))
         snum = num
         num += 1
         muls = num
+        dbl = 1
         for i in xrange(bitlength - 1):
-            f.write('%d gate MUL %d %d\n' % (num, i + 1, bitlength + i))
+            f.write('%d gate MULC %d %d\n' % (num, i + 1, 2**dbl))
             num += 1
+            dbl += 1
         f.write('%d gate ADD %d %d\n' % (num, 0, muls))
         num += 1
         muls += 1
