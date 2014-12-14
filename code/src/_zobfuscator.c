@@ -79,9 +79,7 @@ obf_setup(PyObject *self, PyObject *args)
     {
         PyObject *py_state;
         py_state = PyCapsule_New((void *) s, NULL, state_destructor);
-        if (py_state == NULL)
-            return NULL;
-        return py_state;
+        return py_state ? py_state : NULL;
     }
 }
 
@@ -132,6 +130,7 @@ obf_encode_circuit(PyObject *self, PyObject *args)
     indices = (int *) malloc(sizeof(int) * idx_set_size);
     pows = (int *) malloc(sizeof(int) * idx_set_size);
 
+/* #pragma omp parallel for */
     for (int i = 0; i < n; ++i) {
         mpz_t out, elems[2];
         int deg;
