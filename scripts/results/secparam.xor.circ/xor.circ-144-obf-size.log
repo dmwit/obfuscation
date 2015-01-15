@@ -1,0 +1,16 @@
+4	../code/circuits/xor.circ.obf.144/0.input
+5	../code/circuits/xor.circ.obf.144/0.ncols
+5	../code/circuits/xor.circ.obf.144/0.nrows
+68091522	../code/circuits/xor.circ.obf.144/0.one
+68091524	../code/circuits/xor.circ.obf.144/0.zero
+5	../code/circuits/xor.circ.obf.144/1.input
+5	../code/circuits/xor.circ.obf.144/1.ncols
+5	../code/circuits/xor.circ.obf.144/1.nrows
+68091523	../code/circuits/xor.circ.obf.144/1.one
+68091524	../code/circuits/xor.circ.obf.144/1.zero
+6	../code/circuits/xor.circ.obf.144/nu
+2723661	../code/circuits/xor.circ.obf.144/pzt
+2723661	../code/circuits/xor.circ.obf.144/q
+13618305	../code/circuits/xor.circ.obf.144/s_enc
+5	../code/circuits/xor.circ.obf.144/size
+13618305	../code/circuits/xor.circ.obf.144/t_enc

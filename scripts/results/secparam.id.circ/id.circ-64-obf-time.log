@@ -1,0 +1,33 @@
+Generating MLM parameters...
+  Security Parameter: 64
+  Kappa: 3
+  Alpha: 64
+  Beta: 64
+  Eta: 654
+  Nu: 139
+  Rho: 64
+  Rho_f: 390
+  N: 3924
+  Number of Zs: 3
+  Seed: 8051067415054067559
+  Generating p_i's and g_i's: 2.766208
+  Generating CRT coefficients: 3.210188
+  Generating z_i's: 1.233577
+  Generating pzt: 3.143879
+  Saving to file: 0.001951
+Took: 10.359902
+Constructing 64 BP...
+Took: 0.032420
+Randomizing BPs...
+Took: 0.440153
+Constructing bookend vectors...
+  Computing bookend vectors: 0.094227
+  Encoding 3 elements: 1.292596
+  Encoding 3 elements: 1.303406
+Took: 2.690373
+Obfuscating layer...
+  Encoding 18 elements: 2.099232
+Took: 2.102578
+Obfuscation took: 15.627226
+Max memory usage: 1529516
+Obfuscation took: 15.629717 seconds

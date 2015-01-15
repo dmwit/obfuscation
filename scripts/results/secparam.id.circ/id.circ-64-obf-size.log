@@ -1,0 +1,11 @@
+4	../code/circuits/id.circ.obf.64/0.input
+5	../code/circuits/id.circ.obf.64/0.ncols
+5	../code/circuits/id.circ.obf.64/0.nrows
+2880693	../code/circuits/id.circ.obf.64/0.one
+2880693	../code/circuits/id.circ.obf.64/0.zero
+5	../code/circuits/id.circ.obf.64/nu
+320077	../code/circuits/id.circ.obf.64/pzt
+320077	../code/circuits/id.circ.obf.64/q
+960231	../code/circuits/id.circ.obf.64/s_enc
+5	../code/circuits/id.circ.obf.64/size
+960231	../code/circuits/id.circ.obf.64/t_enc

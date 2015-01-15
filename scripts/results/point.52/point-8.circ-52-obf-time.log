@@ -9,58 +9,46 @@ Generating MLM parameters...
   Rho_f: 1060
   N: 7273
   Number of Zs: 10
-  Size: 10
-  Seed: 15307582333116449003
-  Generating p_i's and g_i's: 67.295697
-  Converting g_i's to python objects: 0.001294
-  Generating CRT coefficients: 12.576470
-  Generating z_i's: 9.037073
-  Generating pzt: 23.755376
-  Saving to file: 0.002415
-Took: 112.673079
-Constructing 52 BPs...
-Took: 0.294791
+  Seed: 8295215253047338899
+  Generating p_i's and g_i's: 168.549255
+  Generating CRT coefficients: 38.876165
+  Generating z_i's: 6.571670
+  Generating pzt: 58.208470
+  Saving to file: 0.007406
+Took: 272.218813
+Constructing 52 BP...
+Took: 0.443488
 Randomizing BPs...
-Took: 2.348163
+Took: 3.517923
 Constructing bookend vectors...
-  Computing bookend vectors: 0.156484
-  Encoding 10 elements: 6.419876
-  Saving to file: 0.008538
-  Encoding 10 elements: 6.968051
-  Saving to file: 0.009486
-Took: 13.568910
+  Computing bookend vectors: 0.116571
+  Encoding 10 elements: 12.333985
+  Encoding 10 elements: 12.990075
+Took: 25.440815
 Obfuscating layer...
-  Encoding 200 elements: 109.692030
-  Saving to file: 0.169162
-Took: 109.899770
+  Encoding 200 elements: 89.820346
+Took: 89.831742
 Obfuscating layer...
-  Encoding 200 elements: 120.379178
-  Saving to file: 0.173253
-Took: 120.596358
+  Encoding 200 elements: 84.997487
+Took: 85.009700
 Obfuscating layer...
-  Encoding 200 elements: 122.219086
-  Saving to file: 0.167893
-Took: 122.434475
+  Encoding 200 elements: 94.121982
+Took: 94.134227
 Obfuscating layer...
-  Encoding 200 elements: 115.550668
-  Saving to file: 0.167143
-Took: 115.762582
+  Encoding 200 elements: 92.324458
+Took: 92.336337
 Obfuscating layer...
-  Encoding 200 elements: 115.486123
-  Saving to file: 0.176349
-Took: 115.708648
+  Encoding 200 elements: 89.146323
+Took: 89.158051
 Obfuscating layer...
-  Encoding 200 elements: 118.236762
-  Saving to file: 0.181492
-Took: 118.466078
+  Encoding 200 elements: 86.923272
+Took: 86.934956
 Obfuscating layer...
-  Encoding 200 elements: 116.094214
-  Saving to file: 0.178322
-Took: 116.320235
+  Encoding 200 elements: 79.748290
+Took: 79.760158
 Obfuscating layer...
-  Encoding 200 elements: 143.506579
-  Saving to file: 0.181665
-Took: 143.740629
-Obfuscation took: 1091.816738
-Max memory usage: 9612576
-Obfuscation took: 1091.846956 seconds
+  Encoding 200 elements: 88.595237
+Took: 88.606779
+Obfuscation took: 1007.404155
+Max memory usage: 9383692
+Obfuscation took: 1007.440935 seconds

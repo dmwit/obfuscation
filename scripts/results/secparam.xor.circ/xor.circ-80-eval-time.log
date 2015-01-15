@@ -1,0 +1,8 @@
+Evaluating 00...
+ Multiplying matrices: 1.739814
+ Multiplying matrices: 1.686853
+ Multiplying vectors: 1.308670
+ Zero test: 0.298324
+Took: 5.036711
+Max memory usage: 232208
+Output = 0

@@ -1,0 +1,16 @@
+4	../code/circuits/and.circ.obf.80/0.input
+5	../code/circuits/and.circ.obf.80/0.ncols
+5	../code/circuits/and.circ.obf.80/0.nrows
+12026192	../code/circuits/and.circ.obf.80/0.one
+12026192	../code/circuits/and.circ.obf.80/0.zero
+5	../code/circuits/and.circ.obf.80/1.input
+5	../code/circuits/and.circ.obf.80/1.ncols
+5	../code/circuits/and.circ.obf.80/1.nrows
+12026192	../code/circuits/and.circ.obf.80/1.one
+12026191	../code/circuits/and.circ.obf.80/1.zero
+5	../code/circuits/and.circ.obf.80/nu
+751637	../code/circuits/and.circ.obf.80/pzt
+751637	../code/circuits/and.circ.obf.80/q
+3006548	../code/circuits/and.circ.obf.80/s_enc
+5	../code/circuits/and.circ.obf.80/size
+3006548	../code/circuits/and.circ.obf.80/t_enc
