@@ -333,11 +333,13 @@ static PyObject *
 obf_evaluate_agis(PyObject *self, PyObject *args)
 {
     char *dir, *input;
-    long bplen;
+    long bplen, nthreads;
     int iszero;
 
-    if (!PyArg_ParseTuple(args, "ssl", &dir, &input, &bplen))
+    if (!PyArg_ParseTuple(args, "ssll", &dir, &input, &bplen, &nthreads))
         return NULL;
+
+    (void) omp_set_num_threads(nthreads);
 
     iszero = evaluate_agis(dir, input, bplen);
 
@@ -351,11 +353,13 @@ static PyObject *
 obf_evaluate_sz(PyObject *self, PyObject *args)
 {
     char *dir, *input;
-    long bplen;
+    long bplen, nthreads;
     int iszero;
 
-    if (!PyArg_ParseTuple(args, "ssl", &dir, &input, &bplen))
+    if (!PyArg_ParseTuple(args, "ssll", &dir, &input, &bplen, &nthreads))
         return NULL;
+
+    (void) omp_set_num_threads(nthreads);
 
     iszero = evaluate_sz(dir, input, bplen);
 

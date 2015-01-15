@@ -23,7 +23,7 @@ class AGISObfuscator(Obfuscator):
             'GGH': self._gen_ggh_mlm_params,
         }
 
-    def _gen_mlm_params(self, secparam, kappa, width, nzs, directory):
+    def _gen_clt_mlm_params(self, secparam, kappa, width, nzs, directory):
         self.logger('Generating MLM parameters...')
         start = time.time()
         if not os.path.exists(directory):
