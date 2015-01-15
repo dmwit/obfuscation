@@ -15,20 +15,21 @@ def pad(array, length, bplength):
         return array
 
 class AGISObfuscator(Obfuscator):
-    def __init__(self, mlm='CLT', verbose=False):
-        super(AGISObfuscator, self).__init__(_obf, mlm=mlm, verbose=verbose)
+    def __init__(self, mlm='CLT', verbose=False, nthreads=None):
+        super(AGISObfuscator, self).__init__(_obf, mlm=mlm, verbose=verbose,
+                                             nthreads=nthreads)
         self._mlm_dict = {
             'CLT': self._gen_clt_mlm_params,
             'GGH': self._gen_ggh_mlm_params,
         }
 
-    def _gen_clt_mlm_params(self, secparam, kappa, width, nzs, directory):
+    def _gen_mlm_params(self, secparam, kappa, width, nzs, directory):
         self.logger('Generating MLM parameters...')
         start = time.time()
         if not os.path.exists(directory):
             os.mkdir(directory)
         self._state, primes = _obf.setup_clt(secparam, kappa, width, nzs,
-                                             directory)
+                                             directory, self._nthreads)
         end = time.time()
         self.logger('Took: %f' % (end - start))
         return primes

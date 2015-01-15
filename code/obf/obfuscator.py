@@ -2,10 +2,11 @@ import utils
 import os, time
 
 class Obfuscator(object):
-    def __init__(self, obf, mlm='CLT', verbose=False):
+    def __init__(self, obf, mlm='CLT', verbose=False, nthreads=None):
         self._state = None
         self._verbose = verbose
         obf.verbose(self._verbose)
+        self._nthreads = nthreads
         self.logger = utils.make_logger(self._verbose)
         assert mlm in ('CLT', 'GGH')
         self._mlm = mlm
@@ -27,7 +28,7 @@ class Obfuscator(object):
         start = time.time()
         files = os.listdir(directory)
         inputs = sorted(filter(lambda s: 'input' in s, files))
-        result = f(directory, inp, len(inputs))
+        result = f(directory, inp, len(inputs), self._nthreads)
         end = time.time()
         self.logger('Took: %f' % (end - start))
         if self._verbose:

@@ -153,7 +153,7 @@ encode_layers_clt(struct state *s, long inp, long idx, long nrows, long ncols,
 static PyObject *
 obf_setup_clt(PyObject *self, PyObject *args)
 {
-    long kappa, size;
+    long kappa, size, nthreads;
     struct state *s;
 
     s = (struct state *) malloc(sizeof(struct state));
@@ -161,11 +161,13 @@ obf_setup_clt(PyObject *self, PyObject *args)
         return NULL;
     s->mlm.choice = CLT;
 
-    if (!PyArg_ParseTuple(args, "lllls", &clt(s).secparam, &kappa, &size,
-                          &clt(s).nzs, &s->dir)) {
+    if (!PyArg_ParseTuple(args, "llllsl", &clt(s).secparam, &kappa, &size,
+                          &clt(s).nzs, &s->dir, &nthreads)) {
         free(s);
         return NULL;
     }
+
+    (void) omp_set_num_threads(nthreads);
 
     {
         long *pows;
@@ -204,7 +206,7 @@ obf_setup_clt(PyObject *self, PyObject *args)
 static PyObject *
 obf_setup_ggh(PyObject *self, PyObject *args)
 {
-    long secparam, kappa, nzs, size;
+    long secparam, kappa, nzs, size, nthreads;
     struct state *s;
 
     s = (struct state *) malloc(sizeof(struct state));
@@ -212,11 +214,13 @@ obf_setup_ggh(PyObject *self, PyObject *args)
         return NULL;
     s->mlm.choice = GGH;
 
-    if (!PyArg_ParseTuple(args, "llls", &secparam, &kappa, &size, &nzs,
-                          &s->dir)) {
+    if (!PyArg_ParseTuple(args, "lllsl", &secparam, &kappa, &size, &nzs,
+                          &s->dir, &nthreads)) {
         free(s);
         return NULL;
     }
+
+    (void) omp_set_num_threads(nthreads);
 
     ggh_mlm_setup(&ggh(s), secparam, kappa);
 
