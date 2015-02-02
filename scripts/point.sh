@@ -8,13 +8,14 @@ PYTHON='python2'
 CODE_DIR='../code'
 CIRCUIT_DIR='../code/circuits'
 LOG_DIR='runs'
-SCHEME=''
+SCHEME='--sahai-zhandry'
 
 mkdir -p $LOG_DIR
 
-MIN=8
-MAX=16
+MIN=4
+MAX=4
 INC=4
+secparam=8
 
 echo "* Running point functions ($MIN -> $MAX)"
 
@@ -24,8 +25,6 @@ do
     ./point.py $point
 done
 popd
-
-secparam=52
 
 dir="$LOG_DIR/point.$secparam"
 mkdir -p $dir
@@ -37,12 +36,12 @@ do
     $SAGE $CODE_DIR/obfuscator obf \
           --load-circuit $CIRCUIT_DIR/$circuit \
           --secparam $secparam \
-          $SCHEME \
+          $SCHEME --kappa 10 \
           --verbose 2>&1 | tee $dir/$circuit-$secparam-obf-time.log
     obf=$circuit.obf.$secparam
     du --bytes $CIRCUIT_DIR/$obf/* \
         | tee $dir/$circuit-$secparam-obf-size.log
-    eval=`sed -n 1p $CIRCUIT_DIR/$circuit | awk '{ print $3 }'`
+    eval=`sed -n 3p $CIRCUIT_DIR/$circuit | awk '{ print $3 }'`
     echo $eval
     $SAGE $CODE_DIR/obfuscator obf \
           --load-obf $CIRCUIT_DIR/$obf \

@@ -118,38 +118,30 @@ def extract_obf_time(fname):
                 lst.append(r)
                 mlm = False
             elif line.startswith('Randomizing BPs'):
-                line = f.next().strip()
-                r = extract(line)
+                r = extract(f.next())
                 print('BP rand: %f' % round(r, 2))
                 lst.append(r)
             elif line.startswith('Constructing bookend'):
                 _ = f.next()
-                a = f.next()
-                _ = f.next()
-                b = f.next()
-                _ = f.next()
+                a = extract(f.next())
+                b = extract(f.next())
                 total = extract(f.next())
-                a = extract(a)
-                b = extract(b)
                 avg = (a + b) / 2
                 print('Bookend enc (avg): %f' % round(avg, 2))
                 print('Bookend enc (total): %f' % round(total, 2))
                 lst.append(total)
             elif line.startswith('Obfuscating layer'):
-                _ = f.next()
-                _ = f.next()
-                a = f.next().strip()
-                obf_count += extract(a)
+                obf_count += extract(f.next().strip())
                 obf_num += 1
             elif line.startswith('Obfuscation took'):
-                print('Layer enc (avg): %f' % round(obf_count / obf_num, 1))
-                print('Layer enc (total): %f' % round(obf_count, 1))
+                print('Layer enc (avg): %f' % round(obf_count / obf_num, 2))
+                print('Layer enc (total): %f' % round(obf_count, 2))
                 lst.append(obf_count)
                 r = extract(line)
                 print('Obf Total: %f' % round(r, 2))
                 lst.append(r)
             elif line.startswith('Max memory'):
-                print('RAM (GB): %f' % round(extract(line) / 1024 / 1024, 1))
+                print('RAM (GB): %f' % round(extract(line) / 1024 / 1024, 2))
                 break
     return lst
 

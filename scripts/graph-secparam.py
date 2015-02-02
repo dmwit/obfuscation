@@ -36,9 +36,6 @@ def main(argv):
     _, xoreval = utils.dir_evaltime(xorfiles)
     ideval, andeval, xoreval = ideval[1:], andeval[1:], xoreval[1:]
 
-    # sizeexp = [(4 ** 5.39) * (x ** 2) for x in xs]
-    # evalexp = [(4 ** 5.84) * (x ** 2) / 1000 for x in xs]
-
     ind = np.arange(len(xs))
     width = 0.2
 
@@ -88,7 +85,6 @@ def main(argv):
 
     ax2 = ax1.twinx()
     ax2.get_yaxis().set_visible(False)
-    # p4 = ax2.plot(ind + 2 * width + width / 2, evalexp, 'k--')
 
     ax1.legend((p1[0], p2[0], p3[0]),
                ('ID', 'AND', 'XOR'),

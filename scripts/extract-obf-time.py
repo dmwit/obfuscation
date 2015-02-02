@@ -4,9 +4,6 @@ from __future__ import division, print_function
 import os, sys
 import utils
 
-def extract(line):
-    return float(line.rstrip().rsplit(' ', 1)[1])
-
 def main(argv):
     if len(argv) != 2:
         print('Usage: %s <path>' % argv[0])
