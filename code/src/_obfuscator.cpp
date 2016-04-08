@@ -441,8 +441,7 @@ obf_evaluate(PyObject *self, PyObject *args)
 
     // Get the size of the matrices
     (void) snprintf(fname, fnamelen, "%s/size", dir);
-    (void) load_mpz_scalar(fname, tmp);
-    size = mpz_get_ui(tmp);
+    size = load_mpz_scalar(fname, tmp) ? mpz_get_ui(tmp) : 0;
 
     // Load q
     (void) snprintf(fname, fnamelen, "%s/q", dir);
